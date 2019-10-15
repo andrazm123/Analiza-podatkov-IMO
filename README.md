@@ -5,7 +5,7 @@
 
 _(Zaradi ogromne količine podatkov dopuščam, da bom analiziral le tako imenovane olimpijade novega časa od leta 2000 naprej.)_
 
-Podatke bom dobil na uradni strani olimpijade [IMO](https://www.imo-official.org/hall.aspx?column=awards&order=desc&nameform=western&block=1&language=sl).
+Podatke bom dobil na uradni strani olimpijade [IMO](https://www.imo-official.org/results_year.aspx?column=year&order=desc&language=sl).
 
 **Za vsako leto bom zajel:**
 * države, ki so tisto leto nastopale,
