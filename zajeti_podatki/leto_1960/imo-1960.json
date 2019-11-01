@@ -1,27 +1,27 @@
 [
     {
         "leto": 1960,
-        "drzava": "Czechoslovakia",
+        "država": "Czechoslovakia",
         "link": "https://www.imo-official.org/team_r.aspx?code=CZS&year=1960"
     },
     {
         "leto": 1960,
-        "drzava": "Hungary",
+        "država": "Hungary",
         "link": "https://www.imo-official.org/team_r.aspx?code=HUN&year=1960"
     },
     {
         "leto": 1960,
-        "drzava": "Romania",
+        "država": "Romania",
         "link": "https://www.imo-official.org/team_r.aspx?code=ROU&year=1960"
     },
     {
         "leto": 1960,
-        "drzava": "Bulgaria",
+        "država": "Bulgaria",
         "link": "https://www.imo-official.org/team_r.aspx?code=BGR&year=1960"
     },
     {
         "leto": 1960,
-        "drzava": "German Democratic Republic",
+        "država": "German Democratic Republic",
         "link": "https://www.imo-official.org/team_r.aspx?code=GDR&year=1960"
     }
 ]

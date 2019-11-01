@@ -1,6 +1,7 @@
 import re
 import orodja
 
+zacetek, konec = 1959, 2020
 
 vzorec_leto = re.compile(
     r'<tr.*?><td><a href="(?P<link1>.*?)amp;(?P<link2>year=\d\d\d\d)">(?P<država>.*?)</a></td>',
@@ -54,25 +55,29 @@ def ustvari_slovar_leto_drzava():
 
 
 
-def vsa_tekmovanja():
-    zacetek, konec = 2019, 2020
+def vsa_tekmovanja(začetek, konec):
     osnovni_link = "https://www.imo-official.org/"
     tekmovanja = []
     for leto in range(zacetek, konec):
+        tekmovanje_leto = []
+        #Za leto 1980 ni podatkov.
+        if leto == 1980:
+            continue
         url = f'https://www.imo-official.org/year_country_r.aspx?year={leto}'
         ime_datoteke_html = f'zajeti_podatki/leto_{leto}/imo-{leto}.html'
         orodja.shrani_spletno_stran(url, ime_datoteke_html)
         vsebina = orodja.vsebina_datoteke(f'zajeti_podatki/leto_{leto}/imo-{leto}.html')
         
         for link in vzorec_leto.finditer(vsebina):
-            tekmovanja.append({
+            tekmovanje_leto.append({
                 "leto": leto,
                 "država": link.groupdict()["država"],
                 "link": osnovni_link + link.groupdict()["link1"] + link.groupdict()["link2"]
             })
         # Shranim v json
         ime_datoteke_json = f'zajeti_podatki/leto_{leto}/imo-{leto}.json'
-        orodja.zapisi_json(tekmovanja, ime_datoteke_json)
+        orodja.zapisi_json(tekmovanje_leto, ime_datoteke_json)
+        tekmovanja.extend(tekmovanje_leto)
     return tekmovanja
         
 
@@ -129,22 +134,56 @@ def vrača_tekmovalce(blok):
 
 
 def izloci_gnezdene_podatke(seznam):
-    pass
-
+    seznam_tekmovalcev = []
+    seznam_tekmovanj = []
+    for element in seznam:
+        for tekmova in element["tekmovalci"]:
+            seznam_tekmovalcev.append({
+                "leto": element["leto"],
+                "država": element["država"],
+                "id": tekmova["id"],
+                "ime": tekmova["ime"],
+                "p1": tekmova["p1"],
+                "p2": tekmova["p2"],
+                "p3": tekmova["p3"],
+                "p4": tekmova["p4"],
+                "p5": tekmova["p5"],
+                "p6": tekmova["p6"],
+                "vsota": tekmova["vsota"],
+                "nagrada": tekmova["nagrada"]
+            })
+        seznam_tekmovanj.append({
+            "leto": element["leto"],
+            "država": element["država"],
+            "gostiteljica": element["gostiteljica"],
+            "leader": element["leader"],
+            "deputy leader": element["deputy leader"]
+        })
+    return seznam_tekmovalcev, seznam_tekmovanj
 
 
 
 
 seznam_vsega = []
 leto_gostiteljica = ustvari_slovar_leto_drzava()
-for tekmovanje in vsa_tekmovanja():
+for tekmovanje in vsa_tekmovanja(zacetek, konec):
     leto = tekmovanje["leto"]
     država = tekmovanje["država"]
     link = tekmovanje["link"]
     gostiteljica = leto_gostiteljica[leto]
     vsebina = vsebina_za_leto(leto, država, link)
-    leaders = vzorec_leaders.search(vsebina).groupdict()
-    blok = vzorec_bloka.search(vsebina).group(0)
+    poisci_leaderje = vzorec_leaders.search(vsebina)
+    if poisci_leaderje is None:
+        leaders = {}
+        leaders["deputy_leader"] = None
+        leaders["leader"] = None
+    else:
+        leaders = poisci_leaderje.groupdict()
+    poisci_blok = vzorec_bloka.search(vsebina)
+    if poisci_blok is None:
+        blok = ""
+    else:
+        blok = poisci_blok.group()
     tekmovalci = []
     for tekmovalec in vrača_tekmovalce(blok):
         tekmovalci.append(tekmovalec)
@@ -153,16 +192,17 @@ for tekmovanje in vsa_tekmovanja():
         "gostiteljica": gostiteljica,
         "država": država,
         "leader": leaders["leader"],
-        "deputy_leader": leaders["deputy_leader"],
+        "deputy leader": leaders["deputy_leader"],
         "tekmovalci": tekmovalci
     })
-    # Shranim v json
-    ime_datoteke_json = f'obdelani_podatki/vsi_podatki.json'
-    orodja.zapisi_json(seznam_vsega, ime_datoteke_json)
-    # Shranim v csv
+    
+# Shranim v json
+ime_datoteke_json = 'obdelani_podatki/vsi_podatki.json'
+orodja.zapisi_json(seznam_vsega, ime_datoteke_json)
 
-
-
-
-
-
+# Shranim v csv
+seznam_tekmovalcev, seznam_tekmovanj = izloci_gnezdene_podatke(seznam_vsega)
+glava_tekmovanj = ["leto", "gostiteljica", "država", "leader", "deputy leader"]
+glava_tekmovalcev = ["leto", "država", "id", "ime", "p1", "p2", "p3", "p4", "p5", "p6", "vsota", "nagrada"]
+orodja.zapisi_csv(seznam_tekmovanj, glava_tekmovanj, "obdelani_podatki/tekmovanja.csv")
+orodja.zapisi_csv(seznam_tekmovalcev, glava_tekmovalcev, "obdelani_podatki/tekmovalci.csv")
