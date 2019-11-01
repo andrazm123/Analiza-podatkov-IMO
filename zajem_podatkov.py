@@ -26,7 +26,7 @@ vzorec_tekmovalca = re.compile(
     r'(?P<p3>(\d|))</td><td align="center">(?P<p4>(\d|))</td><td align="center">'
     r'(?P<p5>(\d|))</td><td align="center">(?P<p6>(\d|))</td><td align="right" '
     r'class="doubleRightLine">(?P<vsota>\d*?)</td><td align="right">\d*?</td>'
-    r'<td align="right" class="doubleRightLine">.*?</td><td>(?P<nagrada>.*?)</td>',
+    r'<td align="right" class="doubleRightLine">.*?</td><td>(?P<nagrada>.*?)(</td>|<sup>)',
     flags=re.DOTALL
 )
 
@@ -60,8 +60,8 @@ def vsa_tekmovanja(začetek, konec):
     tekmovanja = []
     for leto in range(zacetek, konec):
         tekmovanje_leto = []
-        #Za leto 1980 ni podatkov.
-        if leto == 1980:
+        #Za leto 1980 ni podatkov, leta 1960, 1961, 1962 pa je IMO potekal v drugačnem formatu
+        if leto == 1980 or leto == 1960 or leto == 1961 or leto == 1962:
             continue
         url = f'https://www.imo-official.org/year_country_r.aspx?year={leto}'
         ime_datoteke_html = f'zajeti_podatki/leto_{leto}/imo-{leto}.html'
