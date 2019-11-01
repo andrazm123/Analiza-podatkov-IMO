@@ -30,6 +30,13 @@ vzorec_tekmovalca = re.compile(
     flags=re.DOTALL
 )
 
+vzorec_tekmovalca_196x = re.compile(
+    r'( align="center"|><a href="participant_r.aspx\?id=(?P<id>\d+)")>'
+    r'(?P<ime>(\*|[^0-9\s<].*?))(</a>|)</td><td align="center">.*?'
+    r'<td align="right" class="doubleRightLine">.*?</td><td>(?P<nagrada>.*?)(</td>|<sup>)',
+    flags=re.DOTALL
+)
+
 vzorec_leto_gostiteljica = re.compile(
     r'<tr( class="imp"|)><td align="center"><a href="year_country_r.aspx\?year=\d\d\d\d">(?P<leto>\d\d\d\d)'
     r'</a></td><td><a href="country_team_r.aspx\?code=.*?">(?P<gostiteljica>.*?)</a></td>',
@@ -60,8 +67,8 @@ def vsa_tekmovanja(začetek, konec):
     tekmovanja = []
     for leto in range(zacetek, konec):
         tekmovanje_leto = []
-        #Za leto 1980 ni podatkov, leta 1960, 1961, 1962 pa je IMO potekal v drugačnem formatu
-        if leto == 1980 or leto == 1960 or leto == 1961 or leto == 1962:
+        #Za leto 1980 ni podatkov.
+        if leto == 1980:
             continue
         url = f'https://www.imo-official.org/year_country_r.aspx?year={leto}'
         ime_datoteke_html = f'zajeti_podatki/leto_{leto}/imo-{leto}.html'
@@ -132,6 +139,22 @@ def vrača_tekmovalce(blok):
         yield izloci_podatke_tekmovalca(tekmovalec.groupdict())
 
 
+def vrača_tekmovalce_196x(blok):
+    for tekmovalec in vzorec_tekmovalca_196x.finditer(blok):
+        tekmovalec = tekmovalec.groupdict()
+        for i in range(1, 7):
+            tekmovalec[f'p{str(i)}'] = "unknown"
+        tekmovalec["vsota"] = "unknown"
+        if tekmovalec["nagrada"] == "":
+            tekmovalec["nagrada"] = None
+        if tekmovalec["id"]:
+            tekmovalec["id"] = int(tekmovalec["id"])
+        else:
+            tekmovalec["id"] = None
+        if tekmovalec["ime"] == "*":
+            tekmovalec["ime"] = "?"
+        yield tekmovalec
+
 
 def izloci_gnezdene_podatke(seznam):
     seznam_tekmovalcev = []
@@ -185,8 +208,13 @@ for tekmovanje in vsa_tekmovanja(zacetek, konec):
     else:
         blok = poisci_blok.group()
     tekmovalci = []
-    for tekmovalec in vrača_tekmovalce(blok):
-        tekmovalci.append(tekmovalec)
+    #Leta 1960 in 1962 je tekmovanje potekalo v drugačnem formatu.
+    if leto not in [1960, 1962]:
+        for tekmovalec in vrača_tekmovalce(blok):
+            tekmovalci.append(tekmovalec)
+    else:
+        for tekmovalec in vrača_tekmovalce_196x(blok):
+            tekmovalci.append(tekmovalec)
     seznam_vsega.append({
         "leto": leto,
         "gostiteljica": gostiteljica,
@@ -195,6 +223,8 @@ for tekmovanje in vsa_tekmovanja(zacetek, konec):
         "deputy leader": leaders["deputy_leader"],
         "tekmovalci": tekmovalci
     })
+
+
     
 # Shranim v json
 ime_datoteke_json = 'obdelani_podatki/vsi_podatki.json'
@@ -206,3 +236,10 @@ glava_tekmovanj = ["leto", "gostiteljica", "država", "leader", "deputy leader"]
 glava_tekmovalcev = ["leto", "država", "id", "ime", "p1", "p2", "p3", "p4", "p5", "p6", "vsota", "nagrada"]
 orodja.zapisi_csv(seznam_tekmovanj, glava_tekmovanj, "obdelani_podatki/tekmovanja.csv")
 orodja.zapisi_csv(seznam_tekmovalcev, glava_tekmovalcev, "obdelani_podatki/tekmovalci.csv")
+
+
+
+
+
+
+
