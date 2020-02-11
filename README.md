@@ -1,5 +1,5 @@
 **Najboljši tekmovalci na Mednarodni matematični olimpijadi**
-==========================================================
+=============================================================
 
 **Analiziral bom vse Mednarodne matematične olimpijade.**
 
